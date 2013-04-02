@@ -11,7 +11,8 @@ class Combination(list):
     def score(self, other):
         first = len([speg for speg, opeg in zip(self, other) if speg == opeg])
         # TODO change it, now it demands 7 colors
-        return first, sum([min(self.count(j), other.count(j)) for j in [0,1,2,3,4,5,6]]) - first
+        colors_count = max(max(self),max(other))+1
+        return first, sum([min(self.count(j), other.count(j)) for j in range(colors_count)]) - first
 
     def __str__(self):
         return "".join([str(x) for x in self])
@@ -27,9 +28,7 @@ class Game:
         self.colors_count = colors_count
         self.hidden_combination = hidden_combination
         self.algorithm = algorithm_class()
-        #        self.algorithm = algorithm_class()
         self.algorithm.setup(self.colors_count, self.pegs_count)
-        # self.check_combination() TODO
 
     def play(self):
         self.combinations = []
@@ -39,7 +38,6 @@ class Game:
 
         while True:
             answer = self.algorithm.attempt(self.combinations, self.scores)
-            print("answer: %s" % answer)
             score = answer.score(self.hidden_combination)
             print("Attempt: %s, Score: %s" % (answer, score))
             self.attempts += 1
@@ -47,6 +45,7 @@ class Game:
             self.scores.append(score)
             if self.win(score):
                 print "Win after %d attempts" % self.attempts
+                print "Combinations played: %s" % self.combinations
                 break
 
     def win(self, score):
@@ -103,6 +102,7 @@ class EvoAlg(Algorithm):
 logging.propagate = False
 logging.basicConfig(level='critical')
 logging.disable(logging.ERROR)
+#
 
 game = Game(6, Combination.from_symbols('3211'), EvoAlg)
 game.play()
