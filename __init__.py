@@ -3,6 +3,9 @@ from pyevolve import GSimpleGA
 from itertools import product
 import logging
 
+logger = logging.getLogger('algorithm')
+logger.setLevel(logging.INFO)
+
 class Color(int):
     pass
 
@@ -45,14 +48,14 @@ class Game:
 
     def play(self):
         self.reset()
-        print("Hidden combination: %s" % self.hidden_combination.__str__())
+        logger.info("Hidden combination: %s" % self.hidden_combination.__str__())
 
         while True:
             answer, score = self.attempt()
-            print("Attempt: %s, Score: %s" % (answer, score))
+            logger.info("Attempt: %s, Score: %s" % (answer, score))
             if self.win(score):
-                print "Win after %d attempts" % self.attempts
-                print "Combinations played: %s" % self.combinations
+                logger.info("Win after %d attempts" % self.attempts)
+                logger.info("Combinations played: %s" % self.combinations)
                 break
 
     def win(self, score):
@@ -81,7 +84,7 @@ class EvoAlg(Algorithm):
         ga = GSimpleGA.GSimpleGA(genome)
         ga.evolve()
         best =  ga.bestIndividual()
-        print best
+        logger.info(best)
         return Combination([Color(c) for c in best])
 
     def create_genome(self):
@@ -104,12 +107,6 @@ class EvoAlg(Algorithm):
             if answer.score(combination) != score:
                 return False
         return True
-
-# No idea how to disable logging
-logging.propagate = False
-logging.basicConfig(level='critical')
-logging.disable(logging.ERROR)
-#
 
 if __name__ == '__main__':
     game = Game(6, Combination.from_symbols('3211'), EvoAlg)
