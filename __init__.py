@@ -37,11 +37,13 @@ class Game:
         self.combinations = []
         self.scores = []
         self.attempts = 0
+        self.evolutions = 0
 
     def attempt(self):
         answer = self.algorithm.attempt(self.combinations, self.scores)
         score = answer.score(self.hidden_combination)
         self.attempts += 1
+        self.evolutions += self.algorithm.ga.getCurrentGeneration()
         self.combinations.append(answer)
         self.scores.append(score)
         return answer, score
@@ -54,7 +56,7 @@ class Game:
             answer, score = self.attempt()
             logger.info("Attempt: %s, Score: %s" % (answer, score))
             if self.win(score):
-                logger.info("Win after %d attempts" % self.attempts)
+                logger.info("Win after %d attempts, %d evolutions" % (self.attempts, self.evolutions))
                 logger.info("Combinations played: %s" % self.combinations)
                 break
 
@@ -81,9 +83,9 @@ class EvoAlg(Algorithm):
         self.answers = before_combinations
         self.scores = old_scores
         genome = self.create_genome()
-        ga = GSimpleGA.GSimpleGA(genome)
-        ga.evolve()
-        best =  ga.bestIndividual()
+        self.ga = GSimpleGA.GSimpleGA(genome)
+        self.ga.evolve()
+        best = self.ga.bestIndividual()
         logger.debug(best)
         return Combination([Color(c) for c in best])
 
