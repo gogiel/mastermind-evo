@@ -57,7 +57,7 @@ class Game:
             logger.info("Attempt: %s, Score: %s" % (answer, score))
             if self.win(score):
                 logger.info("Win after %d attempts, %d evolutions" % (self.attempts, self.evolutions))
-                logger.info("Combinations played: %s" % self.combinations)
+                logger.debug("Combinations played: %s" % self.combinations)
                 break
 
     def win(self, score):
