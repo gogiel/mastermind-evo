@@ -30,19 +30,26 @@ class Game:
         self.algorithm = algorithm_class()
         self.algorithm.setup(self.colors_count, self.pegs_count)
 
-    def play(self):
+    def reset(self):
         self.combinations = []
         self.scores = []
         self.attempts = 0
+
+    def attempt(self):
+        answer = self.algorithm.attempt(self.combinations, self.scores)
+        score = answer.score(self.hidden_combination)
+        self.attempts += 1
+        self.combinations.append(answer)
+        self.scores.append(score)
+        return answer, score
+
+    def play(self):
+        self.reset()
         print("Hidden combination: %s" % self.hidden_combination.__str__())
 
         while True:
-            answer = self.algorithm.attempt(self.combinations, self.scores)
-            score = answer.score(self.hidden_combination)
+            answer, score = self.attempt()
             print("Attempt: %s, Score: %s" % (answer, score))
-            self.attempts += 1
-            self.combinations.append(answer)
-            self.scores.append(score)
             if self.win(score):
                 print "Win after %d attempts" % self.attempts
                 print "Combinations played: %s" % self.combinations
@@ -104,5 +111,6 @@ logging.basicConfig(level='critical')
 logging.disable(logging.ERROR)
 #
 
-game = Game(6, Combination.from_symbols('3211'), EvoAlg)
-game.play()
+if __name__ == '__main__':
+    game = Game(6, Combination.from_symbols('3211'), EvoAlg)
+    game.play()
