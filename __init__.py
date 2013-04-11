@@ -4,7 +4,7 @@ from itertools import product
 import logging
 
 logger = logging.getLogger('algorithm')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 class Color(int):
     pass
@@ -84,7 +84,7 @@ class EvoAlg(Algorithm):
         ga = GSimpleGA.GSimpleGA(genome)
         ga.evolve()
         best =  ga.bestIndividual()
-        logger.info(best)
+        logger.debug(best)
         return Combination([Color(c) for c in best])
 
     def create_genome(self):
