@@ -1,7 +1,7 @@
 from __future__ import division
 from pyevolve import G1DList
 from pyevolve import GSimpleGA
-from itertools import product, combinations
+from itertools import product
 from collections import Counter
 from math import log
 import logging
@@ -93,9 +93,9 @@ class EvoAlg(Algorithm):
         self.colors_count = colors_count
         self.pegs_count = pegs_count
         self.possibilities = list(
-            combinations(
+            product(
                 range(self.colors_count),
-                self.pegs_count
+                repeat=self.pegs_count
            )
         )
 
