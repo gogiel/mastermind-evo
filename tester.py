@@ -7,7 +7,7 @@ import random
 import logging
 from numpy import mean, std
 
-DEFAULT_C = 7
+DEFAULT_C = 6
 DEFAULT_L = 4
 
 eye_catcher = lambda x: x.center(60, '=')
