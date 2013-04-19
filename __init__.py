@@ -1,6 +1,7 @@
 from __future__ import division
 from pyevolve import G1DList
 from pyevolve import GSimpleGA
+from pyevolve import Selectors
 from itertools import product
 from collections import Counter
 from math import log
@@ -104,6 +105,12 @@ class EvoAlg(Algorithm):
         self.scores = old_scores
         genome = self.create_genome()
         self.ga = GSimpleGA.GSimpleGA(genome)
+        self.ga.setPopulationSize(50)
+        self.ga.selector.set(Selectors.GTournamentSelector)
+        self.ga.setCrossoverRate(0.9)
+        self.ga.setMutationRate(1 / self.pegs_count)
+        self.ga.setElitism(True)
+        self.ga.setGenerations(500)
         self.ga.evolve()
         best = self.ga.bestIndividual()
         logger.debug(best)
