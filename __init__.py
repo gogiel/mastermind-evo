@@ -1,6 +1,9 @@
+from __future__ import division
 from pyevolve import G1DList
 from pyevolve import GSimpleGA
-from itertools import product
+from itertools import product, combinations
+from collections import Counter
+from math import log
 import logging
 
 logger = logging.getLogger('algorithm')
@@ -75,9 +78,26 @@ class Algorithm:
 
 
 class EvoAlg(Algorithm):
+    def entropy(self, combination):
+        XI_i = Counter(
+            combination.score(c) for c in self.possibilities
+        ).values()
+        SUM_XI_i = sum(XI_i)
+        return -sum(
+            p_i * log(p_i) for p_i in (
+                XI_ibw / SUM_XI_i for XI_ibw in XI_i if XI_ibw
+            )
+        )
+
     def setup(self, colors_count, pegs_count):
         self.colors_count = colors_count
         self.pegs_count = pegs_count
+        self.possibilities = list(
+            combinations(
+                range(self.colors_count),
+                self.pegs_count
+           )
+        )
 
     def attempt(self, before_combinations, old_scores):
         self.answers = before_combinations
@@ -98,8 +118,7 @@ class EvoAlg(Algorithm):
             combination = Combination([Color(c) for c in chromosome])
             if not game.is_feasible(combination):
                 return 0.0
-            entropy = 0.0 # TODO
-            return 1.0 + entropy
+            return 1.0 + self.entropy(combination)
 
         genome.evaluator.set(eval_func)
         return genome
