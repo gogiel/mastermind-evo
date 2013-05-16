@@ -47,7 +47,7 @@ class Game:
         answer = self.algorithm.attempt(self.combinations, self.scores)
         score = answer.score(self.hidden_combination)
         self.attempts += 1
-        self.evolutions += self.algorithm.ga.getCurrentGeneration()
+        self.evolutions += self.algorithm.evo_count()
         self.combinations.append(answer)
         self.scores.append(score)
         return answer, score
@@ -77,6 +77,8 @@ class Algorithm:
     def attempt(self, before_combinations, old_scores):
         raise NotImplementedError
 
+    def evo_count(self):
+        raise NotImplementedError
 
 class EvoAlg(Algorithm):
     def entropy(self, combination):
@@ -91,6 +93,7 @@ class EvoAlg(Algorithm):
         )
 
     def setup(self, colors_count, pegs_count):
+        self.evolutions_count = 0
         self.colors_count = colors_count
         self.pegs_count = pegs_count
         self.possibilities = list(
@@ -101,6 +104,8 @@ class EvoAlg(Algorithm):
         )
 
     def attempt(self, before_combinations, old_scores):
+        if not before_combinations:
+            return self.first_attempt()
         self.answers = before_combinations
         self.scores = old_scores
         genome = self.create_genome()
@@ -110,11 +115,29 @@ class EvoAlg(Algorithm):
         self.ga.setCrossoverRate(0.9)
         self.ga.setMutationRate(1 / self.pegs_count)
         self.ga.setElitism(True)
-        self.ga.setGenerations(500)
+        self.ga.setGenerations(1)
         self.ga.evolve()
-        best = self.ga.bestIndividual()
+        current_best_fit = 0.0
+        i = 0
+        while True:
+            self.ga.step()
+            found_best = self.ga.bestIndividual()
+            fitness = found_best.getFitnessScore()
+            if  fitness > current_best_fit:
+                best = found_best
+                current_best_fit = fitness
+            i += 1
+            if i >= 500 and current_best_fit > 0.0:
+                break
+            if i > 1000 and current_best_fit == 0.0:
+                best = found_best
+                break
+        self.evolutions_count += i
         logger.debug(best)
         return Combination([Color(c) for c in best])
+
+    def first_attempt(self):
+        return Combination([Color(i >= self.pegs_count / 2 and 1 or 0) for i in range(self.pegs_count)])
 
     def create_genome(self):
         genome = G1DList.G1DList(self.pegs_count)
@@ -135,6 +158,9 @@ class EvoAlg(Algorithm):
             if answer.score(combination) != score:
                 return False
         return True
+
+    def evo_count(self):
+        return self.evolutions_count
 
 if __name__ == '__main__':
     game = Game(6, Combination.from_symbols('3211'), EvoAlg)
