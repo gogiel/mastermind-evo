@@ -10,6 +10,8 @@ import logging
 logger = logging.getLogger('algorithm')
 logger.setLevel(logging.DEBUG)
 
+cache = {}
+
 class Color(int):
     pass
 
@@ -82,15 +84,19 @@ class Algorithm:
 
 class EvoAlg(Algorithm):
     def entropy(self, combination):
+        combination_string = combination.__str__()
+        if combination_string in cache:
+            return cache[combination_string]
         XI_i = Counter(
             combination.score(c) for c in self.possibilities
         ).values()
         SUM_XI_i = sum(XI_i)
-        return -sum(
+        cache[combination_string] = -sum(
             p_i * log(p_i) for p_i in (
                 XI_ibw / SUM_XI_i for XI_ibw in XI_i if XI_ibw
             )
         )
+        return cache[combination_string]
 
     def setup(self, colors_count, pegs_count):
         self.evolutions_count = 0
