@@ -7,10 +7,14 @@ from collections import Counter
 from math import log
 import logging
 
+import sys
+
 logger = logging.getLogger('algorithm')
 logger.setLevel(logging.DEBUG)
 
 cache = {}
+
+current_population=[]
 
 class Color(int):
     pass
@@ -50,6 +54,7 @@ class Game:
         score = answer.score(self.hidden_combination)
         self.attempts += 1
         self.evolutions += self.algorithm.ga.getCurrentGeneration()
+    
         self.combinations.append(answer)
         self.scores.append(score)
         return answer, score
@@ -82,11 +87,13 @@ class Algorithm:
 
 class EvoAlg(Algorithm):
     def entropy(self, combination):
+        #print self.ga.getPopulation()#.__str__()
+
         combination_string = combination.__str__()
         if combination_string in cache:
             return cache[combination_string]
         XI_i = Counter(
-            combination.score(c) for c in filter(self.is_feasible, self.possibilities)
+            combination.score(c) for c in current_population
         ).values()
         SUM_XI_i = sum(XI_i)
         cache[combination_string] = -sum(
@@ -119,6 +126,7 @@ class EvoAlg(Algorithm):
         self.ga.setGenerations(500)
         self.ga.evolve()
         best = self.ga.bestIndividual()
+        current_population = self.ga.getPopulation()
         logger.debug(best)
         return Combination([Color(c) for c in best])
 
@@ -129,6 +137,11 @@ class EvoAlg(Algorithm):
         def eval_func(chromosome):
             game = self
             combination = Combination([Color(c) for c in chromosome])
+        #    print 'PART:'
+        #    for c in chromosome:
+		#		sys.stdout.write(str(c))
+        #    print '\n'
+            
             if not game.is_feasible(combination):
                 return 0.0
             return 1.0 + self.entropy(combination)
