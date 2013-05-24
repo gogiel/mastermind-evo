@@ -10,7 +10,6 @@ import logging
 logger = logging.getLogger('algorithm')
 logger.setLevel(logging.DEBUG)
 
-cache = {}
 
 class Color(int):
     pass
@@ -52,6 +51,12 @@ class Game:
         self.evolutions += self.algorithm.ga.getCurrentGeneration()
         self.combinations.append(answer)
         self.scores.append(score)
+        def is_feasible_loc(combination):
+            is_feasible(self, combination, self.combinations, self.scores)
+        XI_i = Counter(
+            combination.score(c) for c in filter(is_feasible_loc, possibilities(self.colors_count, self.pegs_count))
+        ).values()
+        SUM_XI_i = sum(XI_i)
         return answer, score
 
     def play(self):
@@ -82,29 +87,17 @@ class Algorithm:
 
 class EvoAlg(Algorithm):
     def entropy(self, combination):
-        combination_string = combination.__str__()
-        if combination_string in cache:
-            return cache[combination_string]
-        XI_i = Counter(
-            combination.score(c) for c in filter(self.is_feasible, self.possibilities)
-        ).values()
-        SUM_XI_i = sum(XI_i)
-        cache[combination_string] = -sum(
+        print 'hehehe', XI_i
+        return -sum(
             p_i * log(p_i) for p_i in (
                 XI_ibw / SUM_XI_i for XI_ibw in XI_i if XI_ibw
             )
         )
-        return cache[combination_string]
 
     def setup(self, colors_count, pegs_count):
         self.colors_count = colors_count
         self.pegs_count = pegs_count
-        self.possibilities = list(
-            product(
-                range(self.colors_count),
-                repeat=self.pegs_count
-           )
-        )
+        self.possibilities = possibilities(self.colors_count, self.pegs_count)
 
     def attempt(self, before_combinations, old_scores):
         self.answers = before_combinations
@@ -137,10 +130,21 @@ class EvoAlg(Algorithm):
         return genome
 
     def is_feasible(self, combination):
-        for answer,score in zip(self.answers,self.scores):
-            if answer.score(combination) != score:
-                return False
-        return True
+        is_feasible(self, combination, self.answers, self.scores)
+
+def is_feasible(self, combination, answers, scores):
+    for answer,score in zip(answers, scores):
+        if answer.score(combination) != score:
+            return False
+    return True
+    
+def possibilities(colors_count, pegs_count):
+    return list(
+        product(
+            range(colors_count),
+            repeat=pegs_count
+       )
+    )
 
 if __name__ == '__main__':
     game = Game(6, Combination.from_symbols('3211'), EvoAlg)
