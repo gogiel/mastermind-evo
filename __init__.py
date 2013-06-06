@@ -5,6 +5,7 @@ from pyevolve import Selectors
 from itertools import product
 from collections import Counter
 from math import log
+import random
 import logging
 
 logger = logging.getLogger('algorithm')
@@ -110,16 +111,17 @@ class EvoAlg(Algorithm):
         self.possibilities = [item for item in self.possibilities if self.is_feasible(Combination([Color(c) for c in item]))]
 
     def attempt(self, before_combinations, old_scores):
+        population_size = 50
         self.answers = before_combinations
         self.scores = old_scores
         genome = self.create_genome()
         self.ga = GSimpleGA.GSimpleGA(genome)
-        self.ga.setPopulationSize(50)
+        self.ga.setPopulationSize(population_size)
         self.ga.selector.set(Selectors.GTournamentSelector)
         self.ga.setCrossoverRate(0.9)
         self.ga.setMutationRate(1 / self.pegs_count)
         self.ga.setElitism(True)
-        self.ga.setGenerations(500)
+        self.ga.setGenerations(50)
         self.remove_infeasible()
 
         # set initial population
@@ -127,8 +129,14 @@ class EvoAlg(Algorithm):
         self.ga.is_already_initialized = True
         pop = self.ga.getPopulation()
 
-        for i in xrange(len(pop)):
-            pass# TODO DO SOMETHING HERE print pop[i]
+        combinations = random.sample(self.possibilities, min(len(self.possibilities), population_size))
+        combinations_len = len(combinations)
+
+        for i in xrange(len(pop)): # Set initial population to only feasible solutions
+            list = pop[i]# G1DList
+            combination_to_set = combinations[i % combinations_len]
+            for j in xrange(len(list)):
+                list[j] = combination_to_set[j]
 
         self.ga.evolve()
 
