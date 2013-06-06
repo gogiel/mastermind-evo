@@ -55,7 +55,7 @@ while True:
     counter += 1
     logger.info(eye_catcher(_(' NEW GAME %s ') % counter))
     s = args.s or random.sample(range(args.c) * args.l, args.l)
-    game = Game(args.c - 1, Combination.from_symbols(s), EvoAlg)
+    game = Game(args.c, Combination.from_symbols(s), EvoAlg)
     game.play()
     attempts.append(game.attempts)
     evolutions.append(game.evolutions)

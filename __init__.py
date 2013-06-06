@@ -43,11 +43,14 @@ class Game:
         self.attempts = 0
         self.evolutions = 0
 
-    def attempt(self):
-        answer = self.algorithm.attempt(self.combinations, self.scores)
+    def attempt(self, first):
+        if first:
+            answer = Combination([Color(c) for c in [0, 0, 1, 1]])
+        else:
+            answer = self.algorithm.attempt(self.combinations, self.scores)
         score = answer.score(self.hidden_combination)
         self.attempts += 1
-        self.evolutions += self.algorithm.ga.getCurrentGeneration()
+        self.evolutions += 0 if first else self.algorithm.ga.getCurrentGeneration()
         self.combinations.append(answer)
         self.scores.append(score)
         return answer, score
@@ -56,8 +59,11 @@ class Game:
         self.reset()
         logger.info("Hidden combination: %s" % self.hidden_combination.__str__())
 
+        first = True
+
         while True:
-            answer, score = self.attempt()
+            answer, score = self.attempt(first=first)
+            first = False
             logger.info("Attempt: %s, Score: %s" % (answer, score))
             if self.win(score):
                 logger.info("Win after %d attempts, %d evolutions" % (self.attempts, self.evolutions))
@@ -111,6 +117,7 @@ class EvoAlg(Algorithm):
         self.ga.setMutationRate(1 / self.pegs_count)
         self.ga.setElitism(True)
         self.ga.setGenerations(500)
+        self.possibilities = filter(self.is_feasible, self.possibilities)
         self.ga.evolve()
         best = self.ga.bestIndividual()
         logger.debug(best)
