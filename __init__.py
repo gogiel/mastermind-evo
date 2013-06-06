@@ -104,7 +104,6 @@ class EvoAlg(Algorithm):
         self.possibilities = [item for item in self.possibilities if self.is_feasible(Combination([Color(c) for c in item]))]
 
     def attempt(self, before_combinations, old_scores):
-        print len(self.possibilities)
         self.answers = before_combinations
         self.scores = old_scores
         genome = self.create_genome()
@@ -114,7 +113,7 @@ class EvoAlg(Algorithm):
         self.ga.setCrossoverRate(0.9)
         self.ga.setMutationRate(1 / self.pegs_count)
         self.ga.setElitism(True)
-        self.ga.setGenerations(5)
+        self.ga.setGenerations(50)
         self.remove_infeasible()
 
         # set initial population
@@ -126,7 +125,6 @@ class EvoAlg(Algorithm):
             pass# TODO DO SOMETHING HERE print pop[i]
 
         self.ga.evolve()
-
 
         best = self.ga.bestIndividual()
         logger.debug(best)
@@ -140,7 +138,7 @@ class EvoAlg(Algorithm):
             game = self
             combination = Combination([Color(c) for c in chromosome])
             if not game.is_feasible(combination):
-                return 0.0
+                return self.normalized_distance(combination)
             return 1.0 + self.entropy(combination)
 
         genome.evaluator.set(eval_func)
@@ -151,6 +149,21 @@ class EvoAlg(Algorithm):
             if answer.score(combination) != score:
                 return False
         return True
+
+    def normalized_distance(self, combination):
+        if not self.answers:
+            return 0.0
+        distance = 0.0
+        for answer,score in zip(self.answers,self.scores):
+            new_score = answer.score(combination)
+            distance += abs(score[0] - new_score[0]) + abs(score[1] - new_score[1])
+        if self.answers:
+            distance /= (len(self.answers) * self.pegs_count) # normalized by dividing by the maximum possible distance
+        if distance > 1.0:
+            distance = 1.0 # this should never happen, something went wrong
+        return 1.0 - distance
+
+
 
 # Monkey patching
 
