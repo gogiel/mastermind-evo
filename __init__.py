@@ -10,8 +10,6 @@ import logging
 logger = logging.getLogger('algorithm')
 logger.setLevel(logging.DEBUG)
 
-cache = {}
-
 class Color(int):
     pass
 
@@ -45,11 +43,14 @@ class Game:
         self.attempts = 0
         self.evolutions = 0
 
-    def attempt(self):
-        answer = self.algorithm.attempt(self.combinations, self.scores)
+    def attempt(self, first):
+        if first:
+            answer = Combination([Color(c) for c in [0, 0, 1, 1]])
+        else:
+            answer = self.algorithm.attempt(self.combinations, self.scores)
         score = answer.score(self.hidden_combination)
         self.attempts += 1
-        self.evolutions += self.algorithm.ga.getCurrentGeneration()
+        self.evolutions += 0 if first else self.algorithm.ga.getCurrentGeneration()
         self.combinations.append(answer)
         self.scores.append(score)
         return answer, score
@@ -58,8 +59,11 @@ class Game:
         self.reset()
         logger.info("Hidden combination: %s" % self.hidden_combination.__str__())
 
+        first = True
+
         while True:
-            answer, score = self.attempt()
+            answer, score = self.attempt(first=first)
+            first = False
             logger.info("Attempt: %s, Score: %s" % (answer, score))
             if self.win(score):
                 logger.info("Win after %d attempts, %d evolutions" % (self.attempts, self.evolutions))
@@ -82,19 +86,15 @@ class Algorithm:
 
 class EvoAlg(Algorithm):
     def entropy(self, combination):
-        combination_string = combination.__str__()
-        if combination_string in cache:
-            return cache[combination_string]
         XI_i = Counter(
             combination.score(c) for c in self.possibilities
         ).values()
         SUM_XI_i = sum(XI_i)
-        cache[combination_string] = -sum(
+        return -sum(
             p_i * log(p_i) for p_i in (
                 XI_ibw / SUM_XI_i for XI_ibw in XI_i if XI_ibw
             )
         )
-        return cache[combination_string]
 
     def setup(self, colors_count, pegs_count):
         self.colors_count = colors_count
@@ -106,7 +106,11 @@ class EvoAlg(Algorithm):
            )
         )
 
+    def remove_infeasible(self):
+        self.possibilities = [item for item in self.possibilities if self.is_feasible(Combination([Color(c) for c in item]))]
+
     def attempt(self, before_combinations, old_scores):
+        print len(self.possibilities)
         self.answers = before_combinations
         self.scores = old_scores
         genome = self.create_genome()
@@ -117,7 +121,19 @@ class EvoAlg(Algorithm):
         self.ga.setMutationRate(1 / self.pegs_count)
         self.ga.setElitism(True)
         self.ga.setGenerations(500)
+        self.remove_infeasible()
+
+        # set initial population
+        self.ga.initialize()
+        self.ga.is_already_initialized = True
+        pop = self.ga.getPopulation()
+
+        for i in xrange(len(pop)):
+            pass# TODO DO SOMETHING HERE print pop[i]
+
         self.ga.evolve()
+
+
         best = self.ga.bestIndividual()
         logger.debug(best)
         return Combination([Color(c) for c in best])
@@ -141,6 +157,18 @@ class EvoAlg(Algorithm):
             if answer.score(combination) != score:
                 return False
         return True
+
+# Monkey patching
+
+old_initialize = GSimpleGA.GSimpleGA.initialize
+
+
+def initialize_patched(self):
+    if hasattr(self,'is_already_initialized') and self.is_already_initialized:
+        return
+    old_initialize(self)
+
+GSimpleGA.GSimpleGA.initialize = initialize_patched
 
 if __name__ == '__main__':
     game = Game(6, Combination.from_symbols('3211'), EvoAlg)
