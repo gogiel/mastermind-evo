@@ -100,7 +100,11 @@ class EvoAlg(Algorithm):
            )
         )
 
+    def remove_infeasible(self):
+        self.possibilities = [item for item in self.possibilities if self.is_feasible(Combination([Color(c) for c in item]))]
+
     def attempt(self, before_combinations, old_scores):
+        print len(self.possibilities)
         self.answers = before_combinations
         self.scores = old_scores
         genome = self.create_genome()
@@ -110,8 +114,20 @@ class EvoAlg(Algorithm):
         self.ga.setCrossoverRate(0.9)
         self.ga.setMutationRate(1 / self.pegs_count)
         self.ga.setElitism(True)
-        self.ga.setGenerations(500)
+        self.ga.setGenerations(5)
+        self.remove_infeasible()
+
+        # set initial population
+        self.ga.initialize()
+        self.ga.is_already_initialized = True
+        pop = self.ga.getPopulation()
+
+        for i in xrange(len(pop)):
+            pass# TODO DO SOMETHING HERE print pop[i]
+
         self.ga.evolve()
+
+
         best = self.ga.bestIndividual()
         logger.debug(best)
         return Combination([Color(c) for c in best])
@@ -135,6 +151,18 @@ class EvoAlg(Algorithm):
             if answer.score(combination) != score:
                 return False
         return True
+
+# Monkey patching
+
+old_initialize = GSimpleGA.GSimpleGA.initialize
+
+
+def initialize_patched(self):
+    if hasattr(self,'is_already_initialized') and self.is_already_initialized:
+        return
+    old_initialize(self)
+
+GSimpleGA.GSimpleGA.initialize = initialize_patched
 
 if __name__ == '__main__':
     game = Game(6, Combination.from_symbols('3211'), EvoAlg)
