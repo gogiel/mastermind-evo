@@ -2,7 +2,7 @@ from __future__ import division
 from pyevolve import G1DList
 from pyevolve import GSimpleGA
 from pyevolve import Selectors
-from itertools import product
+from itertools import product, islice, cycle
 from collections import Counter
 from math import log
 import random
@@ -46,7 +46,7 @@ class Game:
 
     def attempt(self, first):
         if first:
-            answer = Combination([Color(c) for c in [0, 0, 1, 1]])
+            answer = Combination([Color(c) for c in islice(cycle([0, 0, 1, 1]), self.colors_count)])
         else:
             answer = self.algorithm.attempt(self.combinations, self.scores)
         score = answer.score(self.hidden_combination)
