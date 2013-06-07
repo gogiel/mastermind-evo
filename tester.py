@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from __init__ import Game, Combination, EvoAlg
+from game import Game, Combination
 from gettext import gettext as _
 import argparse
 import random
@@ -55,7 +55,7 @@ while True:
     counter += 1
     logger.info(eye_catcher(_(' NEW GAME %s ') % counter))
     s = args.s or random.sample(range(args.c) * args.l, args.l)
-    game = Game(args.c - 1, Combination.from_symbols(s), EvoAlg)
+    game = Game(args.c - 1, Combination.from_symbols(s))
     game.play()
     attempts.append(game.attempts)
     evolutions.append(game.evolutions)
