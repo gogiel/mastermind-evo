@@ -46,7 +46,7 @@ class Game:
 
     def attempt(self, first):
         if first:
-            answer = Combination([Color(c) for c in islice(cycle([0, 0, 1, 1]), self.colors_count)])
+            answer = Combination([Color(c) for c in islice(cycle([0, 0, 1, 1]), self.pegs_count)])
         else:
             answer = self.algorithm.attempt(self.combinations, self.scores)
         score = answer.score(self.hidden_combination)
